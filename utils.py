@@ -78,6 +78,20 @@ def howMuchIsChordInTune(chord: list[Pitch]):
                     numIntervalsInTune += 1
     return numIntervalsInTune / numIntervals
 
+def howMuchIsChordInTuneRatios(chord: list[Fraction]):
+    numIntervals = 0
+    numIntervalsInTune = 0
+    for i in range(len(chord)): #TEST ALL COMBINATIONS OF TWO NOTES IN THE CHORD
+        for j in range(len(chord)):
+            if i==j:
+                continue
+            else:
+                numIntervals += 1
+                interval = makeWithinOneOctave(chord[j]/chord[i])
+                if interval in circulusIntervals:
+                    numIntervalsInTune += 1
+    return numIntervalsInTune / numIntervals
+
 def isMidiIntervalCartesian(interval: int):
     if interval >= 0:
         x = interval % 12

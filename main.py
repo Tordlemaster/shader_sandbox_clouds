@@ -1,9 +1,10 @@
 from fractions import Fraction
 from mido import MidiFile
 import itertools
+from math import log2
 from utils import *
 
-music: MidiFile = MidiFile("benedetti twice.mid")
+music: MidiFile = MidiFile("Carmina_Chromatica.mid")
 numTracks = len(music.tracks) - 1 #TODO Does not apply to all MIDI files
 key = 55 #TODO Implement auto-detection of pitch
 
@@ -44,13 +45,16 @@ while sum([(noteTrackLengths[x] > curTrackPositions[x]) for x in range(numTracks
         possiblePitchesForEachTrack.append([])
         if i in tracksWithNextNotes: #If this track has a note moving now
             nextNote: Note = noteTracks[i][curTrackPositions[i]]
-            for j in range(numTracks): #Look at all notes in previous chord as possible tuning referents
-                intervalDist = nextNote.pitch - tunedChords[-1][j].midiPitch
-                if not isMidiIntervalCartesian(intervalDist): #Not a valid tuning referent
-                    continue
-                intervalRatio = midiDistToRatio(intervalDist)
-                newPitch = tunedChords[-1][j].tuning * intervalRatio
-                possiblePitchesForEachTrack[i].append(Pitch(nextNote.pitch, newPitch, set([j])))
+            chordLookBackIndex = -1
+            while len(possiblePitchesForEachTrack[i]) == 0:
+                for j in range(numTracks): #Look at all notes in previous chord as possible tuning referents
+                    intervalDist = nextNote.pitch - tunedChords[chordLookBackIndex][j].midiPitch
+                    if not isMidiIntervalCartesian(intervalDist): #Not a valid tuning referent
+                        continue
+                    intervalRatio = midiDistToRatio(intervalDist)
+                    newPitch = tunedChords[chordLookBackIndex][j].tuning * intervalRatio
+                    possiblePitchesForEachTrack[i].append(Pitch(nextNote.pitch, newPitch, set([j])))
+                chordLookBackIndex -= 1
         else:
             #If pitch in track i is not changing,copy pitch from previous chord
             possiblePitchesForEachTrack[i].append(tunedChords[-1][i])
@@ -69,7 +73,6 @@ while sum([(noteTrackLengths[x] > curTrackPositions[x]) for x in range(numTracks
         if howMuchIsChordInTune(c) == maximumTuningProportion:
             chordsMaxInTune.append(c)
     
-    #Assert that all maximally tuned chords have the same tuning ratios (probably not true)
     #TODO add a score of how non-Cartesian each interval is in howMuchIsChordInTune
 
     newChord = chordsMaxInTune[0]
@@ -84,3 +87,4 @@ while sum([(noteTrackLengths[x] > curTrackPositions[x]) for x in range(numTracks
 
 for c in tunedChords:
     print([x.tuning for x in c])
+    #print([(1200 * log2(x.tuning)) for x in c])
