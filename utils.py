@@ -49,10 +49,10 @@ def midiToNotes(file: MidiFile): #Notes described by start time since beginning
         #If msg is note_on, add the corresponding note to notesTracks with startTime = time
         #Else add its time to time
         for msg in track: 
+            time += msg.time
             if msg.type == "note_on":
                 notesTracks[-1].append(Note(msg.note, time))
-            else:
-                time += msg.time
+                
     return notesTracks
 
 def midiDistToRatio(dist: int):
@@ -60,11 +60,11 @@ def midiDistToRatio(dist: int):
         ratioWithinOctave = midiDistToRatioList[dist % 12]
         octaves = dist // 12
     else:
-        ratioWithinOctave = midiDistToRatioList[(dist) % -12]
+        ratioWithinOctave = 1 / midiDistToRatioList[abs(dist) % -12]
         octaves = -(dist // -12)
     return ratioWithinOctave * (Fraction(2, 1) ** octaves)
 
-def howMuchIsChordInTune(chord: list):
+def howMuchIsChordInTune(chord: list[Pitch]):
     numIntervals = 0
     numIntervalsInTune = 0
     for i in range(len(chord)): #TEST ALL COMBINATIONS OF TWO NOTES IN THE CHORD
@@ -73,7 +73,17 @@ def howMuchIsChordInTune(chord: list):
                 continue
             else:
                 numIntervals += 1
-                interval = makeWithinOneOctave(chord[j]/chord[i])
+                interval = makeWithinOneOctave(chord[j].tuning/chord[i].tuning)
                 if interval in circulusIntervals:
                     numIntervalsInTune += 1
     return numIntervalsInTune / numIntervals
+
+def isMidiIntervalCartesian(interval: int):
+    if interval >= 0:
+        x = interval % 12
+    else:
+        x = (interval) % -12
+    if midiDistToRatioList[abs(x)] is not None:
+        return True
+    else:
+        return False
