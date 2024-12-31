@@ -1,0 +1,45 @@
+#version 460 core
+
+layout(local_size_x = 1, local_size_y = 1) in;
+layout(rgba32f, binding = 0) uniform image2D img_output;
+
+#include FastNoiseLite
+
+float cloudLocationSigmoid(float x) {
+    return 2.0 / (1.0 + exp(-10.0 * (-x - 1.0)));
+}
+
+void main() {
+
+    fnl_state worley, worleyMod, perlin;
+
+    worley = fnlCreateState(1337);
+    worley.noise_type = FNL_NOISE_CELLULAR;
+    worley.frequency = 0.05;
+
+    worleyMod = fnlCreateState(1337);
+    worleyMod.noise_type = FNL_NOISE_CELLULAR;
+    worleyMod.frequency = 0.048;
+
+    perlin = fnlCreateState(1337);
+    perlin.noise_type = FNL_NOISE_PERLIN;
+    perlin.frequency = 0.007;
+    perlin.fractal_type = FNL_FRACTAL_FBM;
+    perlin.octaves = 5;
+    perlin.lacunarity = 2.18;
+    perlin.gain = 0.5;
+    perlin.weighted_strength = -0.55;
+
+    ivec2 icoords = ivec2(gl_GlobalInvocationID.xy);
+    vec2 coords = vec2(float(gl_GlobalInvocationID.x), float(gl_GlobalInvocationID.y));
+    
+    vec4 pixel = vec4(
+        //5.0 * (1.0 - (fnlGetNoise2D(worley, coords.x, coords.y) * 0.5 + 0.5)) - 4.0,
+        cloudLocationSigmoid(fnlGetNoise2D(worley, coords.x, coords.y)),
+        fnlGetNoise2D(perlin, coords.x, coords.y) * 0.5 + 0.5 - (fnlGetNoise2D(worleyMod, coords.x, coords.y) * 0.5 + 0.5) * 0.4,
+        1.0,
+        0.5
+    );
+
+    imageStore(img_output, icoords, pixel);
+}
