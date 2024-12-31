@@ -1,0 +1,45 @@
+#version 460 core
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(rgba32f, binding = 0) uniform image3D img_output;
+
+#include FastNoiseLite
+
+void main() {
+
+    fnl_state perlin_r, worley_r, worley_g, worley_b, worley_a;
+
+    perlin_r = fnlCreateState(1337);
+    perlin_r.noise_type = FNL_NOISE_PERLIN;
+    perlin_r.frequency = 0.1;
+
+    worley_g = fnlCreateState(1337);
+    worley_g.noise_type = FNL_NOISE_CELLULAR;
+    worley_g.frequency = 0.08;
+    worley_g.fractal_type = FNL_FRACTAL_FBM;
+    worley_g.octaves = 7;
+
+    worley_b = fnlCreateState(1337);
+    worley_b.noise_type = FNL_NOISE_CELLULAR;
+    worley_b.frequency = 0.16;
+    worley_b.fractal_type = FNL_FRACTAL_FBM;
+    worley_b.octaves = 7;
+
+    worley_a = fnlCreateState(1337);
+    worley_a.noise_type = FNL_NOISE_CELLULAR;
+    worley_a.frequency = 0.32;
+    worley_a.fractal_type = FNL_FRACTAL_FBM;
+    worley_a.octaves = 7;
+
+    ivec3 icoords = ivec3(gl_GlobalInvocationID);
+    vec3 coords = vec3(float(gl_GlobalInvocationID.x), float(gl_GlobalInvocationID.y), float(gl_GlobalInvocationID.z));
+    
+    vec4 pixel = vec4(
+        fnlGetNoise3D(perlin_r, coords.x, coords.y, coords.z) * 0.5f + 0.5f,
+        1.0f - (fnlGetNoise3D(worley_g, coords.x, coords.y, coords.z) + 1.0f),
+        1.0f - (fnlGetNoise3D(worley_b, coords.x, coords.y, coords.z) + 1.0f),
+        1.0f - (fnlGetNoise3D(worley_a, coords.x, coords.y, coords.z) + 1.0f)
+    );
+
+    imageStore(img_output, icoords, pixel);
+}
