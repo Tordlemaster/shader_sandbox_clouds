@@ -45,6 +45,8 @@ const vec2[16] cloudFramePxOffsets = vec2[16](
     vec2(0.0, 0.0)
 );
 const vec3 SKY_COLOR = vec3(0.369, 0.663, 1.0);
+const vec3 CLOUD_SHADOW_COLOR = vec3(0.263, 0.333, 0.459);
+const vec3 CLOUD_LIGHT_COLOR = (vec3(1.0, 0.871, 0.616) * 3.0);
 
 float softClip(float x) {
     return (-1.0 / (2.0 * x + 1.0)) + 1.0;
@@ -85,12 +87,12 @@ float weatherMapCoverage(vec2 coords, float gc) {
 }
 
 float sampleShapeNoise(vec3 coords, float mipmapLevel) {
-    vec4 SNsample = texture(shapeNoise, coords / 700.0, mipmapLevel);
+    vec4 SNsample = texture(shapeNoise, coords / detailScale, mipmapLevel);
     return remap(SNsample.r, dot(SNsample.gba, vec3(0.625, 0.25, 0.125)) - 1.0, 1.0, 0.0, 1.0);
 }
 
 float sampleDetailNoise(vec3 coords, float mipmapLevel, float gc, float ph) {
-    vec4 DNsample = texture(detailNoise, coords / detailScale, mipmapLevel);
+    vec4 DNsample = texture(detailNoise, coords / 34.0, mipmapLevel);
     float dn = dot(DNsample.rgb, vec3(0.625, 0.25, 0.125));
     return 0.35 * exp(-gc * 0.75) * mix(dn, 1 - dn, clamp(ph * 5.0, 0.0, 1.0));
 }
@@ -144,7 +146,7 @@ void main() {
     else if (camPos.y > cloudMaxHeight) initialRayDist = ((camPos.y - cloudMaxHeight) / rayUnitVec.y);
 
     vec3 rayPos = camPos + initialRayDist * rayUnitVec;
-    rayPos += rayUnitVec * 15.0 * texture(blueNoise, pxCoords * (resolution / vec2(470))).r;
+    rayPos += rayUnitVec * 35.0 * texture(blueNoise, pxCoords * (resolution / vec2(470))).r;
 
     //rayLenOutside = ((3.0 * (1.0 - abs(rayAngle.y))) + 1.0) * rayLenOutside;
     //rayLenInside = rayLenOutside / 4.0;
@@ -158,13 +160,13 @@ void main() {
     float activeRayLen = rayLenOutside;
     
     while (rayDist <= maxRayDistance && totalDensity < 1.0) {
-        mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.3, cloudMinHeight, cloudMaxHeight);
+        mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.2, cloudMinHeight, cloudMaxHeight);
 
         if (mainRaySample > 0.0000001 && activeRayLen == rayLenOutside) { //SWITCH TO IN-CLOUD MODE
             if ((rayDist + initialRayDist)> rayLenOutside) {
                 rayPos -= rayUnitVec * (rayLenOutside - rayLenInside); //STEP BACK BY RAYLENOUTSIDE AND FORWARD BY RAYLENINSIDE
                 rayDist -= (rayLenOutside - rayLenInside);
-                mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.3, cloudMinHeight, cloudMaxHeight);
+                mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.2, cloudMinHeight, cloudMaxHeight);
             }
             activeRayLen = rayLenInside;
         }
@@ -180,7 +182,7 @@ void main() {
         if (activeRayLen == rayLenInside) { //STEPS TOWARD THE SUN
             for (int i=0; i<sunSteps; i++) { //STEPS TOWARD THE SUN
                 sunRayPos += sunDir * sunStepLength;
-                sunSampleDensity = cloudDensity(sunRayPos, 0.0, 0.8, 0.3, cloudMinHeight, cloudMaxHeight); //SUN RAY DENSITY SAMPLE
+                sunSampleDensity = cloudDensity(sunRayPos, 0.0, 0.8, 0.2, cloudMinHeight, cloudMaxHeight); //SUN RAY DENSITY SAMPLE
                 totalSunDensity += sunSampleDensity * sunStepLength; //MULTIPLY BY DISTANCE COVERED BECAUSE BEER'S LAW USES DISTANCE
             }
 
@@ -192,7 +194,7 @@ void main() {
     }
 
     //vec3 cloudColor = vec3(totalAttenuation);
-    vec3 cloudColor = vec3(0.263, 0.333, 0.459) + (vec3(1.0, 0.871, 0.616) * 3.0) * totalAttenuation; //cloud shadow color + cloud light color
+    vec3 cloudColor = CLOUD_SHADOW_COLOR + vec3(5.0) * totalAttenuation; //cloud shadow color + cloud light color
     vec3 totalColor = cloudColor * totalDensity + SKY_COLOR * 2.0 * (1 - totalDensity);
 
     totalColor = reinhardTonemapping(totalColor); //REINHARD TONEMAPPING
@@ -203,7 +205,7 @@ void main() {
 
 void main2() {
     vec4 noiseTestSample = texture(weatherMap, fract(TexCoords * 2.0)); //4 weather map channels
-    noiseTestSample = texture(detailNoise, vec3(fract(TexCoords.x * 2.0), fract(TexCoords.y * 2.0), 2.0)); //4 shape noise channels
+    //noiseTestSample = texture(detailNoise, vec3(fract(TexCoords.x * 2.0), fract(TexCoords.y * 2.0), 2.0)); //4 shape noise channels
     //FragColor = vec4(texture(shapeNoise, vec3(TexCoords, 1.0)).rrr, 1.0);
 
     if (TexCoords.x < 0.5 && TexCoords.y >= 0.5) FragColor = vec4(noiseTestSample.rrr, 1.0);

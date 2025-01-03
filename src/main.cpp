@@ -187,6 +187,7 @@ int main() {
 
     //SET UP SHADERS
     Shader fboShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\fboFrag.frag");
+    Shader blurShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\gaussianBlurFrag.frag");
     Shader cloudShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\cloudsFrag3.frag");
     Shader cloudReprojShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\cloudsFragReproj.frag");
 
@@ -341,21 +342,57 @@ int main() {
     Shader shapeNoiseComputeShader = Shader(".\\shaders\\cloudNoise3DGen.comp");
 
     int tex_w = 512, tex_h = 512;
-    GLuint weatherMapShaderTex;
-    glGenTextures(1, &weatherMapShaderTex);
+    GLuint weatherMapShaderTex0, weatherMapShaderTex1;
+    glGenTextures(1, &weatherMapShaderTex1);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex);
+    glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(0, weatherMapShaderTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
+    glGenTextures(1, &weatherMapShaderTex0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    glBindImageTexture(0, weatherMapShaderTex0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     weatherMapComputeShader.use();
     glDispatchCompute(tex_w, tex_h, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-    glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex);
+
+    GLuint weatherMapFBOs[2];
+    glGenFramebuffers(2, weatherMapFBOs);
+    glBindFramebuffer(GL_FRAMEBUFFER, weatherMapFBOs[0]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, weatherMapShaderTex0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, weatherMapFBOs[1]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, weatherMapShaderTex1, 0);
+
+    blurShader.use();
+    glViewport(0, 0, tex_w, tex_h);
+    glBindFramebuffer(GL_FRAMEBUFFER, weatherMapFBOs[1]);
+    blurShader.setBool("horizontal", 0);
+    blurShader.setInt("fbo", 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex0);
+    glBindVertexArray(FBTriVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glViewport(0, 0, tex_w, tex_h);
+    glBindFramebuffer(GL_FRAMEBUFFER, weatherMapFBOs[0]);
+    blurShader.setBool("horizontal", 1);
+    blurShader.setInt("fbo", 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex1);
+    glBindVertexArray(FBTriVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     int tex_d = 128;
@@ -410,7 +447,7 @@ int main() {
     cloudReprojShader.setVec2("resolution", glm::vec2((float)SCR_WIDTH, (float)SCR_HEIGHT));
     float testSampleHeight = 0.2;
     float exposure = 0.5;
-    float detailScale = 34.0;
+    float detailScale = 700.0;
     float hg = 0.2;
 
     //MAIN LOOP
@@ -460,7 +497,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
         //glClearColor(0.0, 0.0, 0.0, 1.0);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex);
+        glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_3D, shapeNoiseTex);
         glActiveTexture(GL_TEXTURE2);
