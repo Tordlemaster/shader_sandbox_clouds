@@ -20,15 +20,18 @@ void main() {
     worleyMod = fnlCreateState(1337);
     worleyMod.noise_type = FNL_NOISE_CELLULAR;
     worleyMod.frequency = 0.048;
+    worleyMod.fractal_type = FNL_FRACTAL_FBM;
+    worleyMod.octaves = 3;
+    worleyMod.gain = 0.15;
 
     perlin = fnlCreateState(1337);
     perlin.noise_type = FNL_NOISE_PERLIN;
     perlin.frequency = 0.007;
     perlin.fractal_type = FNL_FRACTAL_FBM;
-    perlin.octaves = 5;
+    perlin.octaves = 6;
     perlin.lacunarity = 2.18;
-    perlin.gain = 0.5;
-    perlin.weighted_strength = -0.55;
+    perlin.gain = 0.45;
+    perlin.weighted_strength = -0.4;
 
     ivec2 icoords = ivec2(gl_GlobalInvocationID.xy);
     vec2 coords = vec2(float(gl_GlobalInvocationID.x), float(gl_GlobalInvocationID.y));
