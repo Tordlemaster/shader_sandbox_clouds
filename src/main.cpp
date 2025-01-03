@@ -537,7 +537,7 @@ int main() {
         fboShader.use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whichCloudReprojFBO? cloudReprojFBOTex0 : cloudReprojFBOTex1);
-        //glBindTexture(GL_TEXTURE_2D, cloudFBOTex);
+        //glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex0);
         fboShader.setInt("FBO", 0);
         glBindVertexArray(FBTriVAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
