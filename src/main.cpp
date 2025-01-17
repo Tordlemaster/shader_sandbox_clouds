@@ -168,8 +168,8 @@ int main() {
     glGenTextures(1, &cloudReprojFBOTex0);
     glBindTexture(GL_TEXTURE_2D, cloudReprojFBOTex0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindFramebuffer(GL_FRAMEBUFFER, cloudReprojFBO0);
@@ -178,8 +178,8 @@ int main() {
     glGenTextures(1, &cloudReprojFBOTex1);
     glBindTexture(GL_TEXTURE_2D, cloudReprojFBOTex1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindFramebuffer(GL_FRAMEBUFFER, cloudReprojFBO1);
@@ -239,6 +239,9 @@ int main() {
     perlin_r.SetFractalOctaves(5);
     perlin_r.SetFractalGain(0.29);
     perlin_r.SetFractalWeightedStrength(-1.73);
+    worley_r.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
+    worley_r.SetCellularDistanceFunction(FastNoiseLite::CellularDistanceFunction_EuclideanSq);
+    worley_r.SetFrequency(0.04);
     worley_g.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
     worley_g.SetCellularDistanceFunction(FastNoiseLite::CellularDistanceFunction_Euclidean);
     worley_g.SetFractalType(FastNoiseLite::FractalType_FBm);
@@ -266,7 +269,7 @@ int main() {
         for (int y=0; y<128; y++) {
             for (int x=0; x<128; x++) {
                 perlinNoiseData[index] = {
-                    perlin_r.GetNoise((float)x, (float)y, (float)z) * 0.5f + 0.5f,
+                    (perlin_r.GetNoise((float)x, (float)y, (float)z) * 0.5f + 0.5f) * (1.0f - (worley_r.GetNoise((float)x, (float)y, (float)z) + 1.0f)),
                     1.0f - (worley_g.GetNoise((float)x, (float)y, (float)z) + 1.0f),
                     1.0f - (worley_b.GetNoise((float)x, (float)y, (float)z) + 1.0f),
                     1.0f - (worley_a.GetNoise((float)x, (float)y, (float)z) + 1.0f)
@@ -445,9 +448,9 @@ int main() {
     cloudShader.setFloat("invAspectRatio", ((float)SCR_HEIGHT / (float)SCR_WIDTH));
     cloudReprojShader.use();
     cloudReprojShader.setVec2("resolution", glm::vec2((float)SCR_WIDTH, (float)SCR_HEIGHT));
-    float testSampleHeight = 0.2;
+    float testSampleHeight = 12;
     float exposure = 0.5;
-    float detailScale = 700.0;
+    float detailScale = 1755.62; //1502.29;
     float hg = 0.2;
 
     //MAIN LOOP
@@ -473,9 +476,10 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) testSampleHeight -= 1.0 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) exposure += 1.0 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) exposure -= 1.0 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) detailScale += 40.0 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) detailScale -= 40.0 * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) detailScale += 50.0 * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) detailScale -= 50.0 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) hg += 0.3 * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) hg -= 0.3 * deltaTime;
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) cam.pos += cam.forward * deltaTime * 500.0f;
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cam.pos -= cam.forward * deltaTime * 500.0f;
