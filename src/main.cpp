@@ -448,10 +448,10 @@ int main() {
     cloudShader.setFloat("invAspectRatio", ((float)SCR_HEIGHT / (float)SCR_WIDTH));
     cloudReprojShader.use();
     cloudReprojShader.setVec2("resolution", glm::vec2((float)SCR_WIDTH, (float)SCR_HEIGHT));
-    float testSampleHeight = 12;
+    float testSampleHeight = 3.61;
     float exposure = 0.5;
     float detailScale = 134.74; //29.2; //1502.29;
-    float hg = 0.2;
+    float hg = 0.8;
 
     //MAIN LOOP
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
@@ -478,8 +478,8 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) exposure -= 1.0 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) detailScale += 50.0 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) detailScale -= 50.0 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) hg += 0.3 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) hg -= 0.3 * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) hg += 0.03 * deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) hg -= 0.03 * deltaTime;
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) cam.pos += cam.forward * deltaTime * 500.0f;
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cam.pos -= cam.forward * deltaTime * 500.0f;
