@@ -45,8 +45,8 @@ const vec2[16] cloudFramePxOffsets = vec2[16](
     vec2(0.0, 0.0)
 );
 const vec3 SKY_COLOR = vec3(0.369, 0.663, 1.0);
-const vec3 CLOUD_SHADOW_COLOR = vec3(0.163, 0.2, 0.3);
-const vec3 CLOUD_LIGHT_COLOR = (vec3(1.0, 0.871, 0.616) * 2.0);
+const vec3 CLOUD_SHADOW_COLOR = vec3(0.0588, 0.0706, 0.1098);
+const vec3 CLOUD_LIGHT_COLOR = (vec3(1.0, 0.871, 0.616) * 5.0);
 //const vec3 CLOUD_LIGHT_COLOR = vec3(1.0, 0.9, 0.5);
 
 float softClip(float x) {
@@ -88,12 +88,12 @@ float weatherMapCoverage(vec2 coords, float gc) {
 }
 
 float sampleShapeNoise(vec3 coords, float mipmapLevel) {
-    vec4 SNsample = texture(shapeNoise, coords / detailScale, mipmapLevel);
+    vec4 SNsample = texture(shapeNoise, coords / 1755.62, mipmapLevel);
     return remap(SNsample.r, dot(SNsample.gba, vec3(0.625, 0.25, 0.125)) - 1.0, 1.0, 0.0, 1.0);
 }
 
 float sampleDetailNoise(vec3 coords, float mipmapLevel, float gc, float ph) {
-    vec4 DNsample = texture(detailNoise, coords / 29.2, mipmapLevel);
+    vec4 DNsample = texture(detailNoise, coords / detailScale, mipmapLevel);
     float dn = dot(DNsample.rgb, vec3(0.625, 0.25, 0.125));
     return 0.35 * exp(-gc * 0.75) * mix(dn, 1 - dn, clamp(ph * 5.0, 0.0, 1.0));
 }
@@ -161,19 +161,20 @@ void main() {
     float totalDensity = 0.0;
     float rayDist = 0.0;
     float distWithinCloud = 0.0;
-    float totalAttenuation = 0.0;
+    float totalTransmission = 1.0;
+    vec3 totalColor = CLOUD_SHADOW_COLOR;
     float mainRaySample = 0.0;
     float activeRayLen = rayLenOutside;
     float depth = 1000000;
     
-    while (rayDist <= maxRayDistance && totalDensity < 1.0) {
-        mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.1, cloudMinHeight, cloudMaxHeight);
+    while (rayDist <= maxRayDistance && totalTransmission > 0.01) {
+        mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.03, cloudMinHeight, cloudMaxHeight);
 
         if (mainRaySample > 0.0000001 && activeRayLen == rayLenOutside) { //SWITCH TO IN-CLOUD MODE
             if ((rayDist + initialRayDist)> rayLenOutside) {
                 rayPos -= rayUnitVec * (rayLenOutside - rayLenInside); //STEP BACK BY RAYLENOUTSIDE AND FORWARD BY RAYLENINSIDE
                 rayDist -= (rayLenOutside - rayLenInside);
-                mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.1, cloudMinHeight, cloudMaxHeight);
+                mainRaySample = cloudDensity(rayPos, 0.0, 0.8, 0.03, cloudMinHeight, cloudMaxHeight);
                 inStepsCloudCount = inStepsInAnOutStep;
             }
             activeRayLen = rayLenInside;
@@ -189,26 +190,27 @@ void main() {
         float sunSampleDensity;
         if (activeRayLen == rayLenInside) { //STEPS TOWARD THE SUN
             depth = min(depth, rayDist + initialRayDist);
+            float sunLightTransmission = 1.0;
             for (int i=0; i<sunSteps; i++) { //STEPS TOWARD THE SUN
                 sunRayPos += sunDir * sunStepLength;
-                sunSampleDensity = cloudDensity(sunRayPos, 0.0, 0.8, 0.1, cloudMinHeight, cloudMaxHeight); //SUN RAY DENSITY SAMPLE
-                totalSunDensity += sunSampleDensity * sunStepLength; //MULTIPLY BY DISTANCE COVERED BECAUSE BEER'S LAW USES DISTANCE
+                sunSampleDensity = cloudDensity(sunRayPos, 0.0, 0.8, 0.03, cloudMinHeight, cloudMaxHeight); //SUN RAY DENSITY SAMPLE
+                sunLightTransmission *= beersLaw(sunStepLength * sunSampleDensity);
             }
 
-            float totalSunAttenuation = beersLaw(totalSunDensity); //HOW MUCH LIGHT REACHES THE MAIN RAY SAMPLE POINT
-            totalSunAttenuation *= henyeyGreenstein(dot(sunDir, sunDir));
-            totalAttenuation += (totalSunAttenuation * beersLaw(totalDensity)); //HOW MUCH LIGHT FROM THIS MAIN RAY SAMPLE POINT REACHES THE CAMERA
+            float transmission = beersLaw(activeRayLen * mainRaySample);
+            totalColor += vec3(1.0) * vec3(20.0) * sunLightTransmission * (1.0 - transmission) * (totalTransmission / b);
+            totalTransmission *= transmission;
             inStepsCloudCount--;
         }
         rayPos += rayUnitVec * activeRayLen;
         rayDist += activeRayLen;
     }
 
-    totalAttenuation *= henyeyGreenstein(dot(rayUnitVec, sunDir));
+    //totalAttenuation *= henyeyGreenstein(dot(rayUnitVec, sunDir));
 
     //vec3 cloudColor = vec3(totalAttenuation);
-    vec3 cloudColor = CLOUD_SHADOW_COLOR + (vec3(2.0)) * totalAttenuation; //cloud shadow color + cloud light color
-    vec3 totalColor = cloudColor * totalDensity + SKY_COLOR * 2.0 * (1 - totalDensity);
+    //vec3 cloudColor = CLOUD_SHADOW_COLOR + (vec3(2.0)) * totalAttenuation; //cloud shadow color + cloud light color
+    totalColor = totalColor * (1 - totalTransmission) + SKY_COLOR * (totalTransmission);
 
     float depth_factor = 1.0 - pow(2, -depth * 0.0001);
     //totalColor = mix(totalColor, SKY_COLOR * 2.0, depth_factor);

@@ -384,7 +384,7 @@ int main() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex0);
     glBindVertexArray(FBTriVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    //glDrawArrays(GL_TRIANGLES, 0, 3);
     glViewport(0, 0, tex_w, tex_h);
     glBindFramebuffer(GL_FRAMEBUFFER, weatherMapFBOs[0]);
     blurShader.setBool("horizontal", 1);
@@ -392,7 +392,7 @@ int main() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex1);
     glBindVertexArray(FBTriVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    //glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, weatherMapShaderTex0);
@@ -450,7 +450,7 @@ int main() {
     cloudReprojShader.setVec2("resolution", glm::vec2((float)SCR_WIDTH, (float)SCR_HEIGHT));
     float testSampleHeight = 12;
     float exposure = 0.5;
-    float detailScale = 1755.62; //1502.29;
+    float detailScale = 134.74; //29.2; //1502.29;
     float hg = 0.2;
 
     //MAIN LOOP
