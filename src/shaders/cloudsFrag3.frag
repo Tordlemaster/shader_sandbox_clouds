@@ -113,7 +113,7 @@ float beersLaw(float distance) {
 }
 
 float henyeyGreenstein(float theta) {
-    return (1.0 - hg*hg) / (pow(1.0 + hg*hg - 2.0 * hg * cos(theta), 3.0 / 2.0));
+    return (1.0 - hg*hg) / (4.0 * PI * pow(1.0 + hg*hg - 2.0 * hg * theta, 3.0 / 2.0));
 }
 
 float inScatter(float distance) {
@@ -122,7 +122,14 @@ float inScatter(float distance) {
 
 vec3 reinhardTonemapping(vec3 color) {
     float luminosity = (color.r + color.g + color.b) / 3.0;
+    //float luminosity = dot(vec3(0.2126, 0.7152, 0.0722), color);
     return color / (1.0 + luminosity);
+}
+
+vec3 skyColor(vec3 rayDir, vec3 sunDir) {
+    vec3 result = SKY_COLOR;
+    if (dot(rayDir, sunDir) > 0.999) result = vec3(20.0);
+    return result;
 }
 
 const float FOV = radians(45.0);
@@ -196,9 +203,11 @@ void main() {
                 sunSampleDensity = cloudDensity(sunRayPos, 0.0, 0.8, 0.03, cloudMinHeight, cloudMaxHeight); //SUN RAY DENSITY SAMPLE
                 sunLightTransmission *= beersLaw(sunStepLength * sunSampleDensity);
             }
+            //sunLightTransmission = 1.0 - ((1.0 - sunLightTransmission) * henyeyGreenstein(dot(sunDir, sunDir)));
 
-            float transmission = beersLaw(activeRayLen * mainRaySample);
-            totalColor += vec3(1.0) * vec3(20.0) * sunLightTransmission * (1.0 - transmission) * (totalTransmission / b);
+            float transmission = beersLaw(activeRayLen * mainRaySample);// * henyeyGreenstein(dot(rayUnitVec, sunDir));
+            //transmission = 1.0 - ((1.0 - transmission) * henyeyGreenstein(dot(rayUnitVec, sunDir)));
+            totalColor += vec3(1.0) * vec3(20.0) * sunLightTransmission * (1.0 - transmission) * (totalTransmission / b) * henyeyGreenstein(dot(rayUnitVec, sunDir)) * 4 * PI;
             totalTransmission *= transmission;
             inStepsCloudCount--;
         }
@@ -206,11 +215,11 @@ void main() {
         rayDist += activeRayLen;
     }
 
-    //totalAttenuation *= henyeyGreenstein(dot(rayUnitVec, sunDir));
+    //totalTransmission = 1.0 - ((1.0 - totalTransmission) * henyeyGreenstein(dot(rayUnitVec, sunDir)));
 
     //vec3 cloudColor = vec3(totalAttenuation);
     //vec3 cloudColor = CLOUD_SHADOW_COLOR + (vec3(2.0)) * totalAttenuation; //cloud shadow color + cloud light color
-    totalColor = totalColor * (1 - totalTransmission) + SKY_COLOR * (totalTransmission);
+    totalColor = totalColor * (1 - totalTransmission) + skyColor(rayUnitVec, sunDir) * (totalTransmission);
 
     float depth_factor = 1.0 - pow(2, -depth * 0.0001);
     //totalColor = mix(totalColor, SKY_COLOR * 2.0, depth_factor);
