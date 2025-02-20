@@ -11,9 +11,12 @@
                 ".\\glad.c",
                 "-o",
                 "${workspaceFolder}\\${fileBasenameNoExtension}.exe",
+                //"-IC:\\msys64\\mingw64\\include",
                 "-I${workspaceFolder}\\include",
                 "-L${workspaceFolder}\\lib",
-                "-lglfw3dll"
+                "-lopengl32",
+                "-lglfw3",
+                "-lgdi32"
             ],
             "options": {
                 "cwd": "${fileDirname}"

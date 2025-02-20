@@ -121,8 +121,8 @@ float inScatter(float distance) {
 }
 
 vec3 reinhardTonemapping(vec3 color) {
-    float luminosity = (color.r + color.g + color.b) / 3.0;
-    //float luminosity = dot(vec3(0.2126, 0.7152, 0.0722), color);
+    //float luminosity = (color.r + color.g + color.b) / 3.0;
+    float luminosity = dot(vec3(0.2126, 0.7152, 0.0722), color);
     return color / (1.0 + luminosity);
 }
 
@@ -169,7 +169,7 @@ void main() {
     float rayDist = 0.0;
     float distWithinCloud = 0.0;
     float totalTransmission = 1.0;
-    vec3 totalColor = CLOUD_SHADOW_COLOR;
+    vec3 totalCloudLight = vec3(0.0);
     float mainRaySample = 0.0;
     float activeRayLen = rayLenOutside;
     float depth = 1000000;
@@ -207,7 +207,7 @@ void main() {
 
             float transmission = beersLaw(activeRayLen * mainRaySample);// * henyeyGreenstein(dot(rayUnitVec, sunDir));
             //transmission = 1.0 - ((1.0 - transmission) * henyeyGreenstein(dot(rayUnitVec, sunDir)));
-            totalColor += vec3(1.0) * vec3(20.0) * sunLightTransmission * (1.0 - transmission) * (totalTransmission / b) * henyeyGreenstein(dot(rayUnitVec, sunDir)) * 4 * PI;
+            totalCloudLight += vec3(1.0) * vec3(20.0) * sunLightTransmission * (1.0 - transmission) * (totalTransmission / b);
             totalTransmission *= transmission;
             inStepsCloudCount--;
         }
@@ -219,6 +219,8 @@ void main() {
 
     //vec3 cloudColor = vec3(totalAttenuation);
     //vec3 cloudColor = CLOUD_SHADOW_COLOR + (vec3(2.0)) * totalAttenuation; //cloud shadow color + cloud light color
+    //totalCloudLight *= henyeyGreenstein(dot(rayUnitVec, sunDir)) * 4 * PI;// * henyeyGreenstein(1.0);
+    vec3 totalColor = totalCloudLight + CLOUD_SHADOW_COLOR;
     totalColor = totalColor * (1 - totalTransmission) + skyColor(rayUnitVec, sunDir) * (totalTransmission);
 
     float depth_factor = 1.0 - pow(2, -depth * 0.0001);
