@@ -207,7 +207,7 @@ Shader::Shader(const char* computePath) {
 	computeCode = readStringFromFile(computePath);
 
 	//TODO REMOVE HARDCODED PREPROCESSING
-	computeCode = preprocessString(computeCode, "#include FastNoiseLite", readStringFromFile(".\\FastNoiseLite.glsl"));
+	computeCode = preprocessString(computeCode, "#include FastNoiseLite", readStringFromFile(".\\src\\shaders\\FastNoiseLite.glsl"));
 	//std::cout << computeCode.substr(0, 512) << std::endl;
 
 	const char* cShaderCode = computeCode.c_str();

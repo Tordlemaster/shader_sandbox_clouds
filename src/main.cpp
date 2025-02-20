@@ -192,10 +192,10 @@ int main() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, cloudReprojFBOTex1, 0);
 
     //SET UP SHADERS
-    Shader fboShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\fboFrag.frag");
-    Shader blurShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\gaussianBlurFrag.frag");
-    Shader cloudShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\cloudsFrag3.frag");
-    Shader cloudReprojShader = Shader(".\\shaders\\fboVert.vert", ".\\shaders\\cloudsFragReproj.frag");
+    Shader fboShader = Shader(".\\src\\shaders\\fboVert.vert", ".\\src\\shaders\\fboFrag.frag");
+    Shader blurShader = Shader(".\\src\\shaders\\fboVert.vert", ".\\src\\shaders\\gaussianBlurFrag.frag");
+    Shader cloudShader = Shader(".\\src\\shaders\\fboVert.vert", ".\\src\\shaders\\cloudsFrag3.frag");
+    Shader cloudReprojShader = Shader(".\\src\\shaders\\fboVert.vert", ".\\src\\shaders\\cloudsFragReproj.frag");
 
     //NOISE TEXTURES
     /*FastNoiseLite perlin, worley, worleyMod;
@@ -347,8 +347,8 @@ int main() {
     free(detailNoiseData);
 
     //DISPATCH COMPUTE SHADERS TO GENERATE NOISE
-    Shader weatherMapComputeShader = Shader(".\\shaders\\cloudNoise2DGen.comp");
-    Shader shapeNoiseComputeShader = Shader(".\\shaders\\cloudNoise3DGen.comp");
+    Shader weatherMapComputeShader = Shader(".\\src\\shaders\\cloudNoise2DGen.comp");
+    Shader shapeNoiseComputeShader = Shader(".\\src\\shaders\\cloudNoise3DGen.comp");
 
     int tex_w = 512, tex_h = 512;
     GLuint weatherMapShaderTex0, weatherMapShaderTex1;
@@ -431,7 +431,7 @@ int main() {
 
     //LOAD ASSETS
     int txHeight, txWidth, nrChannels;
-    unsigned char* txData = stbi_load("..\\assets\\BlueNoise470.png", &txWidth, &txHeight, &nrChannels, 0);
+    unsigned char* txData = stbi_load(".\\assets\\BlueNoise470.png", &txWidth, &txHeight, &nrChannels, 0);
     //std::cout << nrChannels << std::endl;
     //exit(0);
     unsigned int blueNoiseTexture;
@@ -500,9 +500,8 @@ int main() {
             //glReadPixels(0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, img_data);
             char date_str[64];
             std::time_t cur_time = std::time(nullptr);
-            int err = std::strftime(date_str, 63, "%Y-%m-%d-%H_%M_%S", std::localtime(&cur_time));
-            std::cout << err << "\n";
-            std::string filename = std::format("..\\screenshots\\{}.jpg", std::string(date_str));
+            std::strftime(date_str, 63, "%Y-%m-%d-%H_%M_%S", std::localtime(&cur_time));
+            std::string filename = std::format(".\\screenshots\\{}.jpg", std::string(date_str));
             
             //filename = "..\\screenshots\\a.jpg";
             stbi_flip_vertically_on_write(1);
