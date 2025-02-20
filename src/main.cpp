@@ -19,8 +19,8 @@ float FBTriangleVertices[] = {
     -1.0, 3.0, 0.0, 2.0
 };
 
-const int SCR_WIDTH = 1600;
-const int SCR_HEIGHT = 1600;
+const int SCR_WIDTH = 1000;
+const int SCR_HEIGHT = 1000;
 
 typedef struct {
     unsigned char r, g, b, a;
@@ -56,6 +56,8 @@ int setupOpenGL(GLFWwindow **window) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         exit(-1);
     }
+
+    return 0;
 }
 
 void updateCameraBuffer(unsigned int camUBO, camera &cam) {
