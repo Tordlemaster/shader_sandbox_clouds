@@ -1,5 +1,7 @@
 #include <iostream>
 #include <algorithm>
+#include <format>
+#include <ctime>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -8,7 +10,9 @@
 #include "FastNoiseLite.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.h"
+#include "stb_image_write.h"
 
 #include "shader_reader.h"
 
@@ -488,6 +492,26 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) cam.pos += glm::cross(cam.forward, glm::vec3(0.0, 1.0, 0.0)) * deltaTime * 500.0f;
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) cam.pos -= glm::cross(cam.forward, glm::vec3(0.0, 1.0, 0.0)) * deltaTime * 500.0f;
         //std::cout << cam.pos.x << " " << cam.pos.y << " " << cam.pos.z << "\n";
+
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            unsigned char *img_data = (unsigned char *)malloc(SCR_HEIGHT * SCR_WIDTH * 4 * sizeof(unsigned char));
+            //glBindTexture(GL_TEXTURE_2D, (~whichCloudReprojFBO)? cloudReprojFBOTex0 : cloudReprojFBOTex1);
+            glGetTextureImage(cloudReprojFBOTex0, 0, GL_RGBA, GL_UNSIGNED_BYTE, SCR_HEIGHT * SCR_WIDTH * 4 * sizeof(unsigned char), img_data);
+            //glReadPixels(0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, img_data);
+            char date_str[64];
+            std::time_t cur_time = std::time(nullptr);
+            int err = std::strftime(date_str, 63, "%Y-%m-%d-%H_%M_%S", std::localtime(&cur_time));
+            std::cout << err << "\n";
+            std::string filename = std::format("..\\screenshots\\{}.jpg", std::string(date_str));
+            
+            //filename = "..\\screenshots\\a.jpg";
+            stbi_flip_vertically_on_write(1);
+            if (stbi_write_jpg(std::data(filename), SCR_WIDTH, SCR_HEIGHT, 4, img_data, 70))
+                std::cout << "Wrote image " << filename << "\n";
+            else
+                std::cout << "Failed to write image " << filename << "\n";
+            free(img_data);
+        }
 
         //if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         //    cloudFrame = ((cloudFrame + 1) % 16);
