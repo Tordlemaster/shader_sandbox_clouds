@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "*.fsh": "hlsl",
-        "cmath": "cpp"
-    }
-}
