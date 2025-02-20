@@ -480,10 +480,10 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
         if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) testSampleHeight += 1.0 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) testSampleHeight -= 1.0 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) exposure += 1.0 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) exposure -= 1.0 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) detailScale += 50.0 * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) detailScale -= 50.0 * deltaTime;
+        //if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) exposure += 1.0 * deltaTime;
+        //if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) exposure -= 1.0 * deltaTime;
+        //if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) detailScale += 50.0 * deltaTime;
+        //if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) detailScale -= 50.0 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) hg += 0.03 * deltaTime;
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) hg -= 0.03 * deltaTime;
 
